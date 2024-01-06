@@ -1,0 +1,5 @@
+{
+    "require": {
+        "pgrimaud/instagram-user-feed": "^7.0"
+    }
+}

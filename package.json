@@ -1,0 +1,16 @@
+{
+  "name": "ai-influencer",
+  "version": "1.0.0",
+  "description": "An AI influencer in instagram that tries to optimize its followers",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "php-express": "^0.0.3"
+  }
+}
