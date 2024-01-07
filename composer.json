@@ -1,5 +1,6 @@
 {
     "require": {
-        "pgrimaud/instagram-user-feed": "^7.0"
+        "pgrimaud/instagram-user-feed": "^7.0",
+        "symfony/cache": "^7.0"
     }
 }
