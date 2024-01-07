@@ -6,7 +6,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Capture login information
         $_SESSION['login'] = $_POST['login']??null; 
         $_SESSION['password'] = $_POST['password']??null;
-
         echo "Logged in successfully";
     } else {
         // Handle error: login information is incomplete or incorrect

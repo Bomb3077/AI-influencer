@@ -3,10 +3,10 @@ import express from 'express';
 import session from 'express-session';
 
 // Initialize and configure PHP
-const php = await NodePHP.load('8.2', {
+const php = await NodePHP.load('8.3', {
     requestHandler: {
         documentRoot: '/srv',
-        absoluteUrl: "http://localhost:3000"
+        absoluteUrl: "http://localhost:3000",
     }
 });
 
@@ -25,7 +25,6 @@ app.use(session({
     saveUninitialized: false, // Don't create session until something is stored
     cookie: { secure: false } // Use cookies over HTTPS only
 }));
-
 
 app.post('/login', async (req, res) => {
     const login = req.body.login || null;
