@@ -1,3 +1,5 @@
 *.txt
 node_modules/
 vendor/
+test.js
+cache/

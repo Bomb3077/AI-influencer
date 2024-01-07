@@ -10,19 +10,20 @@ use Instagram\Exception\InstagramException;
 use Psr\Cache\CacheException;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 
-require realpath(dirname(__FILE__)) . '/vendor/autoload.php';
+require realpath(dirname(__FILE__)) . '/../vendor/autoload.php';
 
 $cachePool = new FilesystemAdapter('Instagram', 0, __DIR__ . '/../cache');
 // Fetch login and password from query parameters
 $login = $_GET['login'] ?? null;
 $password = $_GET['password'] ?? null;
+$profile_username = $_GET['profile_username'] ?? null;
 // easier to test for now
 
 try {
     $api = new Api($cachePool);
     $api->login($login, $password);
 
-    $profile = $api->getProfile('robertdowneyjr');
+    $profile = $api->getProfile($profile_username);
 
     echo '============================' . "\n";
     echo 'User Information : ' . "\n";

@@ -1,18 +1,6 @@
-import { NodePHP } from '@php-wasm/node';
 import express from 'express';
 import session from 'express-session';
-
-// Initialize and configure PHP
-const php = await NodePHP.load('8.3', {
-    requestHandler: {
-        documentRoot: '/srv',
-        absoluteUrl: "http://localhost:3000",
-    }
-});
-
-php.mkdir('/srv');
-php.chdir('/srv');
-php.mount(process.cwd(), '/srv'); // Ensure this is the correct path
+import axios from 'axios';
 
 // Initialize and configure Express
 const app = express();
@@ -26,42 +14,41 @@ app.use(session({
     cookie: { secure: false } // Use cookies over HTTPS only
 }));
 
-app.post('/login', async (req, res) => {
-    const login = req.body.login || null;
-    const password = req.body.password || null;
-    if (!login || !password){
-        console.log("missing login and password");
-        res.redirect('login.ejs');
-    }
-    req.session.login = login;
-    req.session.password = password;
-    res.redirect("/viewprofile");
-});
-app.get('/viewprofile', async(req, res)=>{
-    console.log("in viewprofile");
-    console.log(req.session.login+req.session.password);
-    if (req.session.login && req.session.password) {
-        const query = `?login=${encodeURIComponent(req.session.login)}&password=${encodeURIComponent(req.session.password)}`;
-        res.redirect("viewprofile.php" + query);
-    } else {
-        res.redirect("/login.ejs"); // Redirect to login if the session data isn't available
-    }
+app.get('/login', async(req, res)=>{
+    const message = req.query.message ?? null;
+    res.render('login', {message: message});
 });
 
-app.all('*', async (req, res) => {
-    console.log(req.method + ' - ' + req.url);
+app.post('/login', async(req, res)=>{
+    const login = req.body.login ?? null;
+    const password = req.body.password ?? null;
+    if(login&&password){
+        req.session.login = login;
+        req.session.password = password;
+        res.redirect('/home');
+    }else{
+        res.redirect('/login?message=Missing login or password');
+    }
+})
 
-    const response = await php.request({
-        method: req.method,
-        url: req.url,
-        headers: req.headers,
-        body: req.body
+app.get('/home', async(req, res)=>{
+    const data = req.query.data ?? null;
+    const error = req.query.error ?? null;
+    res.render('home', {data: data, error: error});
+});
+app.post('/home', async(req, res)=>{
+    axios.get('http://instai:8888/php/viewprofile.php?'+
+    'login='+req.session.login+"&password="+req.session.password+
+    "&profile_username="+req.body.profile)
+    .then(result => {
+        console.log(result.data);
+        res.redirect('/home?data='+result.data);
+    })
+    .catch(error=>{
+        res.redirect('/home?error='+error);
     });
+})
 
-    res.status(response.httpStatusCode).send(response.text);
-});
-
-// Start the server
 app.listen('3000', () => {
     console.log("Server is running at localhost:3000");
 });
