@@ -79,9 +79,18 @@ function collectMedias(array $medias, ?int $limit = null, Api $api)
             'Likes' => $media->getLikes(),
             'Date' => $media->getDate()->format('Y-m-d h:i:s'),
             'DisplaySrc' => $media->getDisplaySrc(),
-            'isVideo' => $media->isVideo(),
-            'DisplayResources' =>$mediaDetailed->getDisplayResources()
+            'TypeName'=>$media->getTypeName(),
+            'isVideo'=>$media->isVideo(),
+            'SideCarImagesId'=> collectImagesId($mediaDetailed->getSideCarItems())
         ];
+    }
+    return $data;
+}
+
+function collectImagesId(array $mediaDetails){
+    $data = [];
+    foreach($mediaDetails as $mediaDetailed){
+        $data[] = $mediaDetailed->getid();
     }
     return $data;
 }

@@ -4,3 +4,4 @@ vendor/
 test.js
 cache/
 .env
+test.php

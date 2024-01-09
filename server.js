@@ -42,6 +42,32 @@ app.post('/', async (req, res) => {
         res.redirect(`/?error=${encodeURIComponent(error.message)}`);
     }
 });
+app.get('/test', (req, res) => {
+    const error = req.query.error || null;
+    res.render('home', { error });
+});
+
+app.post('/test', async (req, res) => {
+    const baseUrl = process.env.API_BASE_URL;
+    const { profile_username, limit } = req.body;
+    const endpoint = 'test.php';
+    const url = `${baseUrl}${endpoint}`;
+
+    try {
+        const result = await axios.get(url, {
+            params: {
+                CREDENTIALS,
+                profile_username,
+                limit
+            }
+        });
+        console.log(result.data);
+        res.redirect('/test');
+    } catch (error) {
+        console.error(error);
+        res.redirect(`/test?error=${encodeURIComponent(error.message)}`);
+    }
+});
 
 
 app.listen('3000', () => {
