@@ -47,4 +47,28 @@ return new class('login', 'password', 'imapServer:imapPort', 'imapLogin', 'imapP
     {
         return $this->imapPassword;
     }
+    public function setLogin(string $login): void
+    {
+        $this->login = $login;
+    }
+
+    public function setPassword(string $password): void
+    {
+        $this->password = $password;
+    }
+
+    public function setImapServer(string $imapServer): void
+    {
+        $this->imapServer = $imapServer;
+    }
+
+    public function setImapLogin(string $imapLogin): void
+    {
+        $this->imapLogin = $imapLogin;
+    }
+
+    public function setImapPassword(string $imapPassword): void
+    {
+        $this->imapPassword = $imapPassword;
+    }
 };

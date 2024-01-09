@@ -2,6 +2,7 @@ const express = require('express');
 const session = require('express-session');
 const axios = require('axios');
 require("dotenv").config();
+const CREDENTIALS = process.env.CREDENTIALS;
 
 // Initialize and configure Express
 const app = express();
@@ -15,23 +16,6 @@ app.use(session({
     cookie: { secure: false } // Use cookies over HTTPS only
 }));
 
-app.get('/login', async(req, res)=>{
-    const message = req.query.message || null;
-    res.render('login', {message: message});
-});
-
-app.post('/login', async(req, res)=>{
-    const login = req.body.login || null;
-    const password = req.body.password || null;
-    if(login&&password){
-        req.session.login = login;
-        req.session.password = password;
-        res.redirect('/home');
-    }else{
-        res.redirect('/login?message=Missing login or password');
-    }
-})
-
 app.get('/home', (req, res) => {
     const error = req.query.error || null;
     res.render('home', { error });
@@ -39,17 +23,16 @@ app.get('/home', (req, res) => {
 
 app.post('/home', async (req, res) => {
     const baseUrl = process.env.API_BASE_URL;
-    const { login, password } = req.session;
-    const { profile_username } = req.body;
+    const { profile_username, limit } = req.body;
     const endpoint = req.body.media ? 'medias.php' : 'viewprofile.php';
     const url = `${baseUrl}${endpoint}`;
 
     try {
         const result = await axios.get(url, {
             params: {
-                login,
-                password,
-                profile_username
+                CREDENTIALS,
+                profile_username,
+                limit
             }
         });
         console.log(result.data);

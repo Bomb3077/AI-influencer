@@ -7,49 +7,76 @@ ini_set('display_errors', '1');
 
 use Instagram\Api;
 use Instagram\Exception\InstagramException;
+use Instagram\Auth\Checkpoint\ImapClient;
 use Psr\Cache\CacheException;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 
 require realpath(dirname(__FILE__)) . '/../vendor/autoload.php';
 
 $cachePool = new FilesystemAdapter('Instagram', 0, __DIR__ . '/../cache');
-$login = $_GET['login'] ?? null;
-$password = $_GET['password'] ?? null;
+
+$credentials = include_once realpath(dirname(__FILE__)) . '/credentials.php';
+$credentialsJson = isset($_GET['CREDENTIALS']) ? json_decode($_GET['CREDENTIALS'], true) : null;
+if ($credentialsJson) {
+    $credentials->setLogin($credentialsJson['login']);
+    $credentials->setPassword($credentialsJson['password']);
+    $credentials->setImapServer($credentialsJson['imapServer']);
+    $credentials->setImapLogin($credentialsJson['imapLogin']);
+    $credentials->setImapPassword($credentialsJson['imapPassword']);
+}
+
 $profile_username = $_GET['profile_username'] ?? null;
+$limit = isset($_GET['limit']) && is_numeric($_GET['limit']) ? (int)$_GET['limit'] : null;
 
 try {
     $api = new Api($cachePool);
-    $api->login($login, $password);
+    $imapClient = new ImapClient($credentials->getImapServer(), $credentials->getImapLogin(), $credentials->getImapPassword());
+    $api->login($credentials->getLogin(), $credentials->getPassword(), $imapClient);
 
     $profile = $api->getProfile($profile_username);
+    $mediaData = collectMedias($profile->getMedias(), $limit);
 
-    printMedias($profile->getMedias());
+    if ($limit !== null && $limit < count($mediaData)) {
+        $mediaData = array_slice($mediaData, 0, $limit);
+    } else {
+        do {
+            $profile = $api->getMoreMedias($profile);
+            $additionalMedias = collectMedias($profile->getMedias(), $limit ? $limit - count($mediaData) : null);
+            $mediaData = array_merge($mediaData, $additionalMedias);
 
-    do {
-        $profile = $api->getMoreMedias($profile);
-        printMedias($profile->getMedias());
+            if ($limit !== null && count($mediaData) >= $limit) {
+                $mediaData = array_slice($mediaData, 0, $limit);
+                break;
+            }
 
-        // Or with profile id
-        //$profile = $api->getMoreMediasWithProfileId(3504244670);
-        //printMedias($profile->getMedias());
+            // avoid 429 Rate limit from Instagram
+            sleep(1);
+        } while ($profile->hasMoreMedias());
+    }
 
-        // avoid 429 Rate limit from Instagram
-        sleep(1);
-    } while ($profile->hasMoreMedias());
+    header('Content-Type: application/json');
+    echo json_encode($mediaData);
 
 } catch (InstagramException $e) {
-    print_r($e->getMessage());
+    echo json_encode(['error' => $e->getMessage()]);
 } catch (CacheException $e) {
-    print_r($e->getMessage());
+    echo json_encode(['error' => $e->getMessage()]);
 }
 
-function printMedias(array $medias)
+function collectMedias(array $medias, ?int $limit = null)
 {
+    $data = [];
     foreach ($medias as $media) {
-        echo 'ID        : ' . $media->getId() . "\n";
-        echo 'Caption   : ' . $media->getCaption() . "\n";
-        echo 'Link      : ' . $media->getLink() . "\n";
-        echo 'Likes     : ' . $media->getLikes() . "\n";
-        echo 'Date      : ' . $media->getDate()->format('Y-m-d h:i:s') . "\n\n";
+        if ($limit !== null && count($data) >= $limit) {
+            break;
+        }
+        $data[] = [
+            'ID' => $media->getId(),
+            'Caption' => $media->getCaption(),
+            'Link' => $media->getLink(),
+            'Likes' => $media->getLikes(),
+            'Date' => $media->getDate()->format('Y-m-d h:i:s')
+        ];
     }
+    return $data;
 }
