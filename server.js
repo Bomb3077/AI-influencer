@@ -1,6 +1,7 @@
-import express from 'express';
-import session from 'express-session';
-import axios from 'axios';
+const express = require('express');
+const session = require('express-session');
+const axios = require('axios');
+require("dotenv").config();
 
 // Initialize and configure Express
 const app = express();
@@ -15,13 +16,13 @@ app.use(session({
 }));
 
 app.get('/login', async(req, res)=>{
-    const message = req.query.message ?? null;
+    const message = req.query.message || null;
     res.render('login', {message: message});
 });
 
 app.post('/login', async(req, res)=>{
-    const login = req.body.login ?? null;
-    const password = req.body.password ?? null;
+    const login = req.body.login || null;
+    const password = req.body.password || null;
     if(login&&password){
         req.session.login = login;
         req.session.password = password;
@@ -31,23 +32,34 @@ app.post('/login', async(req, res)=>{
     }
 })
 
-app.get('/home', async(req, res)=>{
-    const data = req.query.data ?? null;
-    const error = req.query.error ?? null;
-    res.render('home', {data: data, error: error});
+app.get('/home', (req, res) => {
+    const error = req.query.error || null;
+    res.render('home', { error });
 });
-app.post('/home', async(req, res)=>{
-    axios.get('http://instai:8888/php/viewprofile.php?'+
-    'login='+req.session.login+"&password="+req.session.password+
-    "&profile_username="+req.body.profile)
-    .then(result => {
+
+app.post('/home', async (req, res) => {
+    const baseUrl = process.env.API_BASE_URL;
+    const { login, password } = req.session;
+    const { profile_username } = req.body;
+    const endpoint = req.body.media ? 'medias.php' : 'viewprofile.php';
+    const url = `${baseUrl}${endpoint}`;
+
+    try {
+        const result = await axios.get(url, {
+            params: {
+                login,
+                password,
+                profile_username
+            }
+        });
         console.log(result.data);
-        res.redirect('/home?data='+result.data);
-    })
-    .catch(error=>{
-        res.redirect('/home?error='+error);
-    });
-})
+        res.redirect('/home');
+    } catch (error) {
+        console.error(error);
+        res.redirect(`/home?error=${encodeURIComponent(error.message)}`);
+    }
+});
+
 
 app.listen('3000', () => {
     console.log("Server is running at localhost:3000");

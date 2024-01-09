@@ -13,6 +13,8 @@ use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 require realpath(dirname(__FILE__)) . '/../vendor/autoload.php';
 
 $cachePool = new FilesystemAdapter('Instagram', 0, __DIR__ . '/../cache');
+// $credentials = include_once realpath(dirname(__FILE__)) . '/credentials.php';
+
 // Fetch login and password from query parameters
 $login = $_GET['login'] ?? null;
 $password = $_GET['password'] ?? null;
@@ -25,23 +27,19 @@ try {
 
     $profile = $api->getProfile($profile_username);
 
-    echo '============================' . "\n";
-    echo 'User Information : ' . "\n";
-    echo '============================' . "\n";
-    echo 'ID               : ' . $profile->getId() . "\n";
-    echo 'Full Name        : ' . $profile->getFullName() . "\n";
-    echo 'UserName         : ' . $profile->getUserName() . "\n";
-    echo 'Following        : ' . $profile->getFollowing() . "\n";
-    echo 'Followers        : ' . $profile->getFollowers() . "\n";
-    echo 'Biography        : ' . $profile->getBiography() . "\n";
-    echo 'External Url     : ' . $profile->getExternalUrl() . "\n";
-    echo 'Profile Picture  : ' . $profile->getProfilePicture() . "\n";
-    echo 'Verified Account : ' . ($profile->isVerified() ? 'Yes' : 'No') . "\n";
-    echo 'Private Account  : ' . ($profile->isPrivate() ? 'Yes' : 'No') . "\n";
-    echo 'Medias Count     : ' . $profile->getMediaCount() . "\n";
-    echo '============================' . "\n";
-
-    // ... rest of the script to output profile information ...
+    $reponse = array();
+    $reponse['ID'] = $profile->getId();
+    $reponse['FullName'] = $profile->getFullName();
+    $reponse['Username'] = $profile->getUserName();
+    $reponse['Following'] = $profile->getFollowing();
+    $reponse['Follwers'] = $profile->getFollowers();
+    $reponse['Biography'] = $profile->getBiography();
+    $reponse['ExternalUrl'] = $profile->getExternalUrl();
+    $reponse['ProfilePicture'] = $profile->getProfilePicture();
+    $reponse['VerifiedAccount'] = ($profile->isVerified() ? 'Yes' : 'No');
+    $reponse['PrivateAccount'] = ($profile->isPrivate() ? 'Yes' : 'No');
+    $reponse['MediaCount'] = $profile->getMediaCount();
+    echo json_encode($reponse, JSON_PRETTY_PRINT);
 
 } catch (InstagramException $e) {
     print_r($e->getMessage());
