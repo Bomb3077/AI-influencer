@@ -16,12 +16,12 @@ app.use(session({
     cookie: { secure: false } // Use cookies over HTTPS only
 }));
 
-app.get('/home', (req, res) => {
+app.get('/', (req, res) => {
     const error = req.query.error || null;
     res.render('home', { error });
 });
 
-app.post('/home', async (req, res) => {
+app.post('/', async (req, res) => {
     const baseUrl = process.env.API_BASE_URL;
     const { profile_username, limit } = req.body;
     const endpoint = req.body.media ? 'medias.php' : 'viewprofile.php';
@@ -36,10 +36,10 @@ app.post('/home', async (req, res) => {
             }
         });
         console.log(result.data);
-        res.redirect('/home');
+        res.redirect('/');
     } catch (error) {
         console.error(error);
-        res.redirect(`/home?error=${encodeURIComponent(error.message)}`);
+        res.redirect(`/?error=${encodeURIComponent(error.message)}`);
     }
 });
 

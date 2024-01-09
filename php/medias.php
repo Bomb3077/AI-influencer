@@ -34,14 +34,14 @@ try {
     $api->login($credentials->getLogin(), $credentials->getPassword(), $imapClient);
 
     $profile = $api->getProfile($profile_username);
-    $mediaData = collectMedias($profile->getMedias(), $limit);
+    $mediaData = collectMedias($profile->getMedias(), $limit, $api);
 
     if ($limit !== null && $limit < count($mediaData)) {
         $mediaData = array_slice($mediaData, 0, $limit);
     } else {
         do {
             $profile = $api->getMoreMedias($profile);
-            $additionalMedias = collectMedias($profile->getMedias(), $limit ? $limit - count($mediaData) : null);
+            $additionalMedias = collectMedias($profile->getMedias(), $limit ? $limit - count($mediaData) : null, $api);
             $mediaData = array_merge($mediaData, $additionalMedias);
 
             if ($limit !== null && count($mediaData) >= $limit) {
@@ -63,19 +63,24 @@ try {
     echo json_encode(['error' => $e->getMessage()]);
 }
 
-function collectMedias(array $medias, ?int $limit = null)
+function collectMedias(array $medias, ?int $limit = null, Api $api)
 {
     $data = [];
     foreach ($medias as $media) {
+        $mediaDetailed = $api->getMediaDetailedByShortCode($media);
         if ($limit !== null && count($data) >= $limit) {
             break;
         }
         $data[] = [
             'ID' => $media->getId(),
+            'ShortCode' => $media->getShortCode(),
             'Caption' => $media->getCaption(),
             'Link' => $media->getLink(),
             'Likes' => $media->getLikes(),
-            'Date' => $media->getDate()->format('Y-m-d h:i:s')
+            'Date' => $media->getDate()->format('Y-m-d h:i:s'),
+            'DisplaySrc' => $media->getDisplaySrc(),
+            'isVideo' => $media->isVideo(),
+            'DisplayResources' =>$mediaDetailed->getDisplayResources()
         ];
     }
     return $data;
