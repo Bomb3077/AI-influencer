@@ -8,6 +8,7 @@ ini_set('display_errors', '1');
 use Instagram\Api;
 use Instagram\Exception\InstagramException;
 use Instagram\Auth\Checkpoint\ImapClient;
+use Instagram\Utils\MediaDownloadHelper;
 use Psr\Cache\CacheException;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 
@@ -53,9 +54,12 @@ try {
             sleep(1);
         } while ($profile->hasMoreMedias());
     }
+    $resposne = array();
+    $response['Data'] = $mediaData;
+    $response['UserID'] = $profile->getId();
 
     header('Content-Type: application/json');
-    echo json_encode($mediaData);
+    echo json_encode($response);
 
 } catch (InstagramException $e) {
     echo json_encode(['error' => $e->getMessage()]);
@@ -72,7 +76,7 @@ function collectMedias(array $medias, ?int $limit = null, Api $api)
             break;
         }
         $data[] = [
-            'ID' => $media->getId(),
+            'PostID' => $media->getId(),
             'ShortCode' => $media->getShortCode(),
             'Caption' => $media->getCaption(),
             'Link' => $media->getLink(),
@@ -80,13 +84,15 @@ function collectMedias(array $medias, ?int $limit = null, Api $api)
             'Date' => $media->getDate()->format('Y-m-d h:i:s'),
             'DisplaySrc' => $media->getDisplaySrc(),
             'TypeName'=>$media->getTypeName(),
-            'isVideo'=>$media->isVideo(),
-            'SideCarImagesId'=> collectImagesId($mediaDetailed->getSideCarItems())
+            'isVideo'=>$media->isVideo()
         ];
     }
     return $data;
 }
 
+function formalize(string $str){
+    return '"' . $str . '"';
+}
 function collectImagesId(array $mediaDetails){
     $data = [];
     foreach($mediaDetails as $mediaDetailed){
@@ -94,3 +100,5 @@ function collectImagesId(array $mediaDetails){
     }
     return $data;
 }
+
+
