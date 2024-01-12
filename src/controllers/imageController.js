@@ -1,63 +1,8 @@
-const express = require('express');
-const session = require('express-session');
 const axios = require('axios');
 const fs = require('fs');
 const fsp = require('fs').promises;
 const path = require('path');
 const potrace = require('potrace');
-require("dotenv").config();
-
-const CREDENTIALS = process.env.CREDENTIALS;
-
-// Initialize and configure Express
-const app = express();
-app.set('view engine', 'ejs');
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
-app.use(session({
-    secret: 'asdoifphsodafjod', // This should be a long, random string to keep sessions secure
-    resave: false, // Don't save session if unmodified
-    saveUninitialized: false, // Don't create session until something is stored
-    cookie: { secure: false } // Use cookies over HTTPS only
-}));
-
-
-app.get('/', (req, res) => {
-    const error = req.query.error || null;
-    res.render('home', { error });
-});
-
-
-app.post('/', async (req, res) => {
-    const baseUrl = process.env.API_BASE_URL;
-    const { profile_username, limit } = req.body;
-    const endpoint = req.body.media ? 'medias.php' : 'viewprofile.php';
-    const url = `${baseUrl}${endpoint}`;
-
-    try {
-        const result = await axios.get(url, {
-            params: {
-                CREDENTIALS,
-                profile_username,
-                limit
-            }
-        });
-        console.log(result.data);
-        downloadImagesFromData(result.data);
-        res.redirect('/');
-    } catch (error) {
-        console.error(error);
-        res.redirect(`/?error=${encodeURIComponent(error.message)}`);
-    }
-});
-
-app.get('/vectorize', (req, res) => {
-    res.redirect('/');
-});
-app.post('/vectorize', (req, res) => {
-    vectorizeJpegToSvg();
-    res.redirect('/');
-});
 
 
 const downloadImagesFromData = async (mediaData) => {
@@ -78,16 +23,15 @@ const downloadImagesFromData = async (mediaData) => {
     });
 };
 
-
 const downloadImage = async (userID, postID, imageUrl) => {
-    const path = `./jpeg/${userID}_${postID}.jpeg`;
+    const destination = path.join(__dirname, `../../jpeg/${userID}_${postID}.jpeg`);
     try {
         const response = await axios({
             method: 'GET',
             url: imageUrl,
             responseType: 'stream'
         });
-        const writer = fs.createWriteStream(path);
+        const writer = fs.createWriteStream(destination);
         response.data.pipe(writer);
         return new Promise((resolve, reject) => {
             writer.on('finish', resolve);  
@@ -101,8 +45,8 @@ const downloadImage = async (userID, postID, imageUrl) => {
 
 
 const vectorizeJpegToSvg = async () => {
-    const inputDir = path.join(__dirname, 'jpeg/');
-    const outputDir = path.join(__dirname, 'svg/');
+    const inputDir = path.join(__dirname, '../../jpeg/');
+    const outputDir = path.join(__dirname, '../../svg/');
     try {
         const files = await fsp.readdir(inputDir);
         const imageFiles = files.filter(file => path.extname(file).toLowerCase() === '.jpeg');
@@ -133,6 +77,9 @@ const vectorizeJpegToSvg = async () => {
     }
 };
 
-app.listen('3000', () => {
-    console.log("Server is running at localhost:3000");
-});
+
+
+module.exports = {
+    downloadImagesFromData,
+    vectorizeJpegToSvg,
+};

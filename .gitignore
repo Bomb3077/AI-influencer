@@ -1,9 +1,8 @@
-*.txt
 node_modules/
 vendor/
-test.js
 cache/
 .env
-test.php
 jpeg/
 svg/
+pnpm-lock.yaml
+composer.lock
